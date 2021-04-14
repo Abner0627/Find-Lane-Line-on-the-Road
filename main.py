@@ -131,9 +131,9 @@ for idx in range(frame_count):
 
         elif args.video == 'challenge':
             sx_binary = np.zeros_like(scaled_sobel)
-            sx_binary[(scaled_sobel >= 25) & (scaled_sobel <= 255)] = 1
+            sx_binary[(scaled_sobel >= 13) & (scaled_sobel <= 200)] = 1
             white_binary = np.zeros_like(gray_img)
-            white_binary[(gray_img > 150) & (gray_img <= 255)] = 1
+            white_binary[(gray_img > 125) & (gray_img <= 255)] = 1
             binary_warped = cv2.bitwise_or(sx_binary, white_binary)
 
         elif args.video == 'tw_NH1':
