@@ -124,9 +124,9 @@ for idx in range(frame_count):
 
         elif args.video == 'solidYellowLeft':
             sx_binary = np.zeros_like(scaled_sobel)
-            sx_binary[(scaled_sobel >= 25) & (scaled_sobel <= 255)] = 1
+            sx_binary[(scaled_sobel >= 15) & (scaled_sobel <= 255)] = 1
             white_binary = np.zeros_like(gray_img)
-            white_binary[(gray_img > 150) & (gray_img <= 255)] = 1
+            white_binary[(gray_img > 180) & (gray_img <= 255)] = 1
             binary_warped = cv2.bitwise_or(sx_binary, white_binary)
 
         elif args.video == 'challenge':
@@ -149,7 +149,7 @@ for idx in range(frame_count):
             white_binary = np.zeros_like(gray_img)
             white_binary[(gray_img > 150) & (gray_img <= 255)] = 1
             binary_warped = cv2.bitwise_or(sx_binary, white_binary)
-            
+
         else:
             sx_binary = np.zeros_like(scaled_sobel)
             sx_binary[(scaled_sobel >= 25) & (scaled_sobel <= 255)] = 1
@@ -173,6 +173,7 @@ for idx in range(frame_count):
         lines = cv2.HoughLinesP(masked_image, rho, theta, threshold, np.array([]), minLineLength=min_line_len, maxLineGap=max_line_gap)
         line_img = np.zeros((masked_image.shape[0], masked_image.shape[1], 3), dtype=np.uint8)
         lines_new = _line(lines, vertices)
+
         draw_lines(line_img, lines_new)
 
 
