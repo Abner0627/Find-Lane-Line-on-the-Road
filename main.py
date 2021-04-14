@@ -39,9 +39,7 @@ elif args.video == 'challenge':
 elif args.video == 'solidYellowLeft':
     vertices = config.YL_vertices
 elif args.video == 'tw_NH1':
-    vertices = config.N1_vertices
-elif args.video == 'tw_NH3':
-    vertices = config.N3_vertices                                              
+    vertices = config.N1_vertices                                          
 else:
     print('Wrong file name')
     exit()
@@ -86,7 +84,7 @@ def _line(lines, vertices, lines_new, res=2500):
     min_Lpt = np.min([Lx1.size, Ly1.size, Lx2.size, Ly2.size])
     min_Rpt = np.min([Rx1.size, Ry1.size, Rx2.size, Ry2.size])
 
-    if (Lx1.size*Ly1.size*Rx1.size*Ry1.size*Lx2.size*Ly2.size*Rx2.size*Ry2.size) == 0:
+    if min_Lpt==0 or min_Rpt==0:
         lines_out = lines_new
     
     elif args.video == 'challenge':
@@ -151,14 +149,7 @@ for idx in range(frame_count):
             sx_binary = np.zeros_like(scaled_sobel)
             sx_binary[(scaled_sobel >= 25) & (scaled_sobel <= 255)] = 1
             white_binary = np.zeros_like(gray_img)
-            white_binary[(gray_img > 150) & (gray_img <= 255)] = 1
-            binary_warped = cv2.bitwise_or(sx_binary, white_binary)
-
-        elif args.video == 'tw_NH3':
-            sx_binary = np.zeros_like(scaled_sobel)
-            sx_binary[(scaled_sobel >= 25) & (scaled_sobel <= 255)] = 1
-            white_binary = np.zeros_like(gray_img)
-            white_binary[(gray_img > 150) & (gray_img <= 255)] = 1
+            white_binary[(gray_img > 180) & (gray_img <= 255)] = 1
             binary_warped = cv2.bitwise_or(sx_binary, white_binary)
 
         else:

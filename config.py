@@ -23,11 +23,6 @@ N1_vertices = np.array(
     [1040, 700],  # Top right
     [1920, 990]]) # Bottom right    
 
-N3_vertices = np.array(
-    [[0, 720],  # Bottom left
-    [520, 520],  # Top left
-    [640, 520],  # Top right
-    [1280, 720]]) # Bottom right   
 
 rho = 1
 theta = np.pi/180
