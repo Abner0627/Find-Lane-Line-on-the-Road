@@ -34,14 +34,14 @@ def lr_lines(x, y):
     return np.array(Lx), np.array(Ly), np.array(Rx), np.array(Ry)
 
 
-def linear_reg(x, y, res):
+def linear_reg(x, y, res, Llimt, Rlimt):
     model = LinearRegression(fit_intercept=True)
     model.fit(x[:, np.newaxis], y[:, np.newaxis])
-    xfit = np.linspace(np.min(x), np.max(x), res)[:, np.newaxis]
+    xfit = np.linspace(Llimt, Rlimt, res)[:, np.newaxis]
     yfit = model.predict(xfit)
     return xfit, yfit
 
-def _line(lines, res=2500):
+def _line(lines, vertices, res=2500):
     color = [255, 0, 0]
     thickness = 5
     x1 = lines[:, :, 0]
@@ -51,10 +51,10 @@ def _line(lines, res=2500):
     lines_new = np.zeros((res*2, 1, 4))
     Lx1, Ly1, Rx1, Ry1 = lr_lines(x1, y1)
     Lx2, Ly2, Rx2, Ry2 = lr_lines(x2, y2)
-    Lfitx1, Lfity1 = linear_reg(Lx1, Ly1, res)
-    Lfitx2, Lfity2 = linear_reg(Lx2, Ly2, res)
-    Rfitx1, Rfity1 = linear_reg(Rx1, Ry1, res)
-    Rfitx2, Rfity2 = linear_reg(Rx2, Ry2, res)
+    Lfitx1, Lfity1 = linear_reg(Lx1, Ly1, res, vertices[0, 0], vertices[1, 0])
+    Lfitx2, Lfity2 = linear_reg(Lx2, Ly2, res, vertices[0, 0], vertices[1, 0])
+    Rfitx1, Rfity1 = linear_reg(Rx1, Ry1, res, vertices[3, 0], vertices[2, 0])
+    Rfitx2, Rfity2 = linear_reg(Rx2, Ry2, res, vertices[3, 0], vertices[2, 0])
 
     nx1 = np.concatenate((Lfitx1, Rfitx1)).astype(int)
     nx2 = np.concatenate((Lfitx2, Rfitx2)).astype(int)
@@ -75,13 +75,6 @@ for idx in range(frame_count):
         img = frame
         
 #%% Edge
-        # gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-        # kernel_size = 3
-        # blur_gray = cv2.GaussianBlur(gray,(kernel_size, kernel_size), 0)
-        # low_threshold = 1
-        # high_threshold = 10
-        # binary_warped = cv2.Canny(blur_gray, low_threshold, high_threshold)
-
         gray_img =cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         sobelx = cv2.Sobel(gray_img, cv2.CV_64F, 1, 0)
         abs_sobelx = np.absolute(sobelx)
@@ -96,22 +89,19 @@ for idx in range(frame_count):
 #%% Mask
         mask = np.zeros_like(binary_warped)   
         vertices = np.array(
-                    [[153, 540],  # Bottom left
-                    [430, 337],  # Top left
-                    [536, 337],  # Top right
-                    [872, 540]]) # Bottom right
+                    [[0, 540],  # Bottom left
+                    [430, 330],  # Top left
+                    [530, 330],  # Top right
+                    [960, 540]]) # Bottom right
 
         if len(binary_warped.shape) > 2:
             channel_count = binary_warped.shape[2]
             ignore_mask_color = (255,) * channel_count
         else:
             ignore_mask_color = 255
-            
-
+         
         cv2.fillPoly(mask, [vertices], ignore_mask_color)
         masked_image = cv2.bitwise_and(binary_warped, mask)
-
-
 
 #%% Line
         rho = 1
@@ -122,12 +112,13 @@ for idx in range(frame_count):
 
         lines = cv2.HoughLinesP(masked_image, rho, theta, threshold, np.array([]), minLineLength=min_line_len, maxLineGap=max_line_gap)
         line_img = np.zeros((masked_image.shape[0], masked_image.shape[1], 3), dtype=np.uint8)
-        lines_new = _line(lines)
+        lines_new = _line(lines, vertices)
         draw_lines(line_img, lines_new)
 
 
 #%% Output
-        result = cv2.addWeighted(line_img, 1, img, 1, 0)      
+        line_img = line_img[:,:,[2,1,0]]
+        result = cv2.addWeighted(img, 1, line_img, 1, 0)      
         height, width, layers = result.shape
         size = (width, height)
         video.append(result)
