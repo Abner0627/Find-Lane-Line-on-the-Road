@@ -88,12 +88,15 @@ def _line(lines, vertices, res=2500):
     Rfitx1, Rfity1 = linear_reg(Rx1, Ry1, res, vertices[3, 0], vertices[2, 0])
     Rfitx2, Rfity2 = linear_reg(Rx2, Ry2, res, vertices[3, 0], vertices[2, 0])
 
-    nx1 = np.concatenate((Lfitx1, Rfitx1)).astype(int)
-    nx2 = np.concatenate((Lfitx2, Rfitx2)).astype(int)
-    ny1 = np.concatenate((Lfity1, Rfity1)).astype(int)
-    ny2 = np.concatenate((Lfity2, Rfity2)).astype(int)
+    nx1 = np.concatenate((Lfitx1, Rfitx1))
+    nx2 = np.concatenate((Lfitx2, Rfitx2))
+    ny1 = np.concatenate((Lfity1, Rfity1))
+    ny2 = np.concatenate((Lfity2, Rfity2))
     
-    lines_new = np.concatenate((nx1, ny1, nx2, ny2), axis=1)[:, np.newaxis, :]
+    nx = ((nx1 + nx2)/2).astype(int)
+    ny = ((ny1 + ny2)/2).astype(int)
+
+    lines_new = np.concatenate((nx, ny, nx, ny), axis=1)[:, np.newaxis, :]
 
     return lines_new
     
@@ -118,30 +121,35 @@ for idx in range(frame_count):
             white_binary = np.zeros_like(gray_img)
             white_binary[(gray_img > 180) & (gray_img <= 255)] = 1
             binary_warped = cv2.bitwise_or(sx_binary, white_binary)
-        elif args.video == 'challenge':
-            sx_binary = np.zeros_like(scaled_sobel)
-            sx_binary[(scaled_sobel >= 25) & (scaled_sobel <= 255)] = 1
-            white_binary = np.zeros_like(gray_img)
-            white_binary[(gray_img > 150) & (gray_img <= 255)] = 1
-            binary_warped = cv2.bitwise_or(sx_binary, white_binary)
+
         elif args.video == 'solidYellowLeft':
             sx_binary = np.zeros_like(scaled_sobel)
             sx_binary[(scaled_sobel >= 25) & (scaled_sobel <= 255)] = 1
             white_binary = np.zeros_like(gray_img)
             white_binary[(gray_img > 150) & (gray_img <= 255)] = 1
             binary_warped = cv2.bitwise_or(sx_binary, white_binary)
+
+        elif args.video == 'challenge':
+            sx_binary = np.zeros_like(scaled_sobel)
+            sx_binary[(scaled_sobel >= 25) & (scaled_sobel <= 255)] = 1
+            white_binary = np.zeros_like(gray_img)
+            white_binary[(gray_img > 150) & (gray_img <= 255)] = 1
+            binary_warped = cv2.bitwise_or(sx_binary, white_binary)
+
         elif args.video == 'tw_NH1':
             sx_binary = np.zeros_like(scaled_sobel)
             sx_binary[(scaled_sobel >= 25) & (scaled_sobel <= 255)] = 1
             white_binary = np.zeros_like(gray_img)
             white_binary[(gray_img > 150) & (gray_img <= 255)] = 1
             binary_warped = cv2.bitwise_or(sx_binary, white_binary)
+
         elif args.video == 'tw_NH3':
             sx_binary = np.zeros_like(scaled_sobel)
             sx_binary[(scaled_sobel >= 25) & (scaled_sobel <= 255)] = 1
             white_binary = np.zeros_like(gray_img)
             white_binary[(gray_img > 150) & (gray_img <= 255)] = 1
             binary_warped = cv2.bitwise_or(sx_binary, white_binary)
+            
         else:
             sx_binary = np.zeros_like(scaled_sobel)
             sx_binary[(scaled_sobel >= 25) & (scaled_sobel <= 255)] = 1
