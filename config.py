@@ -18,10 +18,10 @@ CH_vertices = np.array(
     [1080, 666]]) # Bottom right
 
 N1_vertices = np.array(
-    [[0, 1080],  # Bottom left
+    [[0, 990],  # Bottom left
     [805, 700],  # Top left
     [1040, 700],  # Top right
-    [1920, 1080]]) # Bottom right    
+    [1920, 990]]) # Bottom right    
 
 N3_vertices = np.array(
     [[0, 720],  # Bottom left

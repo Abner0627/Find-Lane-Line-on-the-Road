@@ -73,40 +73,51 @@ def linear_reg(x, y, res, Llimt, Rlimt):
     yfit = model.predict(xfit)
     return xfit, yfit
 
-def _line(lines, vertices, res=2500):
+def _line(lines, vertices, lines_new, res=2500):
     color = [255, 0, 0]
     thickness = 5
     x1 = lines[:, :, 0]
     y1 = lines[:, :, 1]
     x2 = lines[:, :, 2]
     y2 = lines[:, :, 3]
-    lines_new = np.zeros((res*2, 1, 4))
+    lines_out = np.zeros((res*2, 1, 4))
     Lx1, Ly1, Rx1, Ry1 = lr_lines(x1, y1)
     Lx2, Ly2, Rx2, Ry2 = lr_lines(x2, y2)
-    Lfitx1, Lfity1 = linear_reg(Lx1, Ly1, res, vertices[0, 0], vertices[1, 0])
-    Lfitx2, Lfity2 = linear_reg(Lx2, Ly2, res, vertices[0, 0], vertices[1, 0])
-    Rfitx1, Rfity1 = linear_reg(Rx1, Ry1, res, vertices[3, 0], vertices[2, 0])
-    Rfitx2, Rfity2 = linear_reg(Rx2, Ry2, res, vertices[3, 0], vertices[2, 0])
+    min_Lpt = np.min([Lx1.size, Ly1.size, Lx2.size, Ly2.size])
+    min_Rpt = np.min([Rx1.size, Ry1.size, Rx2.size, Ry2.size])
 
-    nx1 = np.concatenate((Lfitx1, Rfitx1))
-    nx2 = np.concatenate((Lfitx2, Rfitx2))
-    ny1 = np.concatenate((Lfity1, Rfity1))
-    ny2 = np.concatenate((Lfity2, Rfity2))
+    if (Lx1.size*Ly1.size*Rx1.size*Ry1.size*Lx2.size*Ly2.size*Rx2.size*Ry2.size) == 0:
+        lines_out = lines_new
     
-    nx = ((nx1 + nx2)/2).astype(int)
-    ny = ((ny1 + ny2)/2).astype(int)
+    elif args.video == 'challenge':
+        if min_Lpt<150 or min_Rpt<40:
+            lines_out = lines_new
+    else:
+        Lfitx1, Lfity1 = linear_reg(Lx1, Ly1, res, vertices[0, 0], vertices[1, 0])
+        Lfitx2, Lfity2 = linear_reg(Lx2, Ly2, res, vertices[0, 0], vertices[1, 0])
+        Rfitx1, Rfity1 = linear_reg(Rx1, Ry1, res, vertices[3, 0], vertices[2, 0])
+        Rfitx2, Rfity2 = linear_reg(Rx2, Ry2, res, vertices[3, 0], vertices[2, 0])
 
-    lines_new = np.concatenate((nx, ny, nx, ny), axis=1)[:, np.newaxis, :]
+        nx1 = np.concatenate((Lfitx1, Rfitx1))
+        nx2 = np.concatenate((Lfitx2, Rfitx2))
+        ny1 = np.concatenate((Lfity1, Rfity1))
+        ny2 = np.concatenate((Lfity2, Rfity2))
+        
+        nx = ((nx1 + nx2)/2).astype(int)
+        ny = ((ny1 + ny2)/2).astype(int)
 
-    return lines_new
+        lines_out = np.concatenate((nx, ny, nx, ny), axis=1)[:, np.newaxis, :]
+
+    return lines_out
     
 #%% Video process
+lines_new = 0
 for idx in range(frame_count):   
     vc.set(1, idx)
     ret, frame = vc.read()
     if frame is not None:
-        # print('=====Frame >> ' + str(idx) + '/' + str(frame_count) + '=====', "\r" , end=' ')
-        print('=====Frame >> ' + str(idx) + '/' + str(frame_count) + '=====')
+        print('=====Frame >> ' + str(idx) + '/' + str(frame_count) + '=====', "\r" , end=' ')
+        # print('=====Frame >> ' + str(idx) + '/' + str(frame_count) + '=====')
         img = frame
         
 #%% Edge
@@ -131,9 +142,9 @@ for idx in range(frame_count):
 
         elif args.video == 'challenge':
             sx_binary = np.zeros_like(scaled_sobel)
-            sx_binary[(scaled_sobel >= 13) & (scaled_sobel <= 200)] = 1
+            sx_binary[(scaled_sobel >= 15) & (scaled_sobel <= 255)] = 1
             white_binary = np.zeros_like(gray_img)
-            white_binary[(gray_img > 125) & (gray_img <= 255)] = 1
+            white_binary[(gray_img > 180) & (gray_img <= 255)] = 1
             binary_warped = cv2.bitwise_or(sx_binary, white_binary)
 
         elif args.video == 'tw_NH1':
@@ -172,7 +183,7 @@ for idx in range(frame_count):
 #%% Line
         lines = cv2.HoughLinesP(masked_image, rho, theta, threshold, np.array([]), minLineLength=min_line_len, maxLineGap=max_line_gap)
         line_img = np.zeros((masked_image.shape[0], masked_image.shape[1], 3), dtype=np.uint8)
-        lines_new = _line(lines, vertices)
+        lines_new = _line(lines, vertices, lines_new)
 
         draw_lines(line_img, lines_new)
 
