@@ -4,15 +4,47 @@ import cv2
 import os
 from sklearn.linear_model import LinearRegression
 
+import argparse
+import config
+
+#%% Arg
+parser = argparse.ArgumentParser()
+parser.add_argument('-V','--video',
+                   default='solidWhiteRight',
+                   help='input video file name')
+
+args = parser.parse_args()
+
 #%% Load video
 P = './data'
-V = 'solidWhiteRight.mp4'
+V = args.video + '.mp4'
 sP = './output'
 sV = 'Lane_' + V
 vc = cv2.VideoCapture(os.path.join(P, V))
 fps = vc.get(cv2.CAP_PROP_FPS)
 frame_count = int(vc.get(cv2.CAP_PROP_FRAME_COUNT))
 video = []
+
+#%% Parameters
+rho = config.rho
+theta = config.theta
+threshold = config.threshold
+min_line_len = config.min_line_len
+max_line_gap = config.max_line_gap
+
+if args.video == 'solidWhiteRight':
+    vertices = config.WR_vertices
+elif args.video == 'challenge':
+    vertices = config.CH_vertices
+elif args.video == 'solidYellowLeft':
+    vertices = config.YL_vertices
+elif args.video == 'tw_NH1':
+    vertices = config.N1_vertices
+elif args.video == 'tw_NH3':
+    vertices = config.N3_vertices                                              
+else:
+    print('Wrong file name')
+    exit()
 
 #%% Functions
 def draw_lines(img, lines, color=[255, 0, 0], thickness=10):
@@ -70,8 +102,8 @@ for idx in range(frame_count):
     vc.set(1, idx)
     ret, frame = vc.read()
     if frame is not None:
-        print('=====Frame >> ' + str(idx) + '/' + str(frame_count) + '=====', "\r" , end=' ')
-        # print('=====Frame >> ' + str(idx) + '/' + str(frame_count) + '=====')
+        # print('=====Frame >> ' + str(idx) + '/' + str(frame_count) + '=====', "\r" , end=' ')
+        print('=====Frame >> ' + str(idx) + '/' + str(frame_count) + '=====')
         img = frame
         
 #%% Edge
@@ -80,19 +112,45 @@ for idx in range(frame_count):
         abs_sobelx = np.absolute(sobelx)
         scaled_sobel = np.uint8(255*abs_sobelx/np.max(abs_sobelx))
 
-        sx_binary = np.zeros_like(scaled_sobel)
-        sx_binary[(scaled_sobel >= 25) & (scaled_sobel <= 255)] = 1
-        white_binary = np.zeros_like(gray_img)
-        white_binary[(gray_img > 180) & (gray_img <= 255)] = 1
-        binary_warped = cv2.bitwise_or(sx_binary, white_binary)
+        if args.video == 'solidWhiteRight':
+            sx_binary = np.zeros_like(scaled_sobel)
+            sx_binary[(scaled_sobel >= 25) & (scaled_sobel <= 255)] = 1
+            white_binary = np.zeros_like(gray_img)
+            white_binary[(gray_img > 180) & (gray_img <= 255)] = 1
+            binary_warped = cv2.bitwise_or(sx_binary, white_binary)
+        elif args.video == 'challenge':
+            sx_binary = np.zeros_like(scaled_sobel)
+            sx_binary[(scaled_sobel >= 25) & (scaled_sobel <= 255)] = 1
+            white_binary = np.zeros_like(gray_img)
+            white_binary[(gray_img > 150) & (gray_img <= 255)] = 1
+            binary_warped = cv2.bitwise_or(sx_binary, white_binary)
+        elif args.video == 'solidYellowLeft':
+            sx_binary = np.zeros_like(scaled_sobel)
+            sx_binary[(scaled_sobel >= 25) & (scaled_sobel <= 255)] = 1
+            white_binary = np.zeros_like(gray_img)
+            white_binary[(gray_img > 150) & (gray_img <= 255)] = 1
+            binary_warped = cv2.bitwise_or(sx_binary, white_binary)
+        elif args.video == 'tw_NH1':
+            sx_binary = np.zeros_like(scaled_sobel)
+            sx_binary[(scaled_sobel >= 25) & (scaled_sobel <= 255)] = 1
+            white_binary = np.zeros_like(gray_img)
+            white_binary[(gray_img > 150) & (gray_img <= 255)] = 1
+            binary_warped = cv2.bitwise_or(sx_binary, white_binary)
+        elif args.video == 'tw_NH3':
+            sx_binary = np.zeros_like(scaled_sobel)
+            sx_binary[(scaled_sobel >= 25) & (scaled_sobel <= 255)] = 1
+            white_binary = np.zeros_like(gray_img)
+            white_binary[(gray_img > 150) & (gray_img <= 255)] = 1
+            binary_warped = cv2.bitwise_or(sx_binary, white_binary)
+        else:
+            sx_binary = np.zeros_like(scaled_sobel)
+            sx_binary[(scaled_sobel >= 25) & (scaled_sobel <= 255)] = 1
+            white_binary = np.zeros_like(gray_img)
+            white_binary[(gray_img > 150) & (gray_img <= 255)] = 1
+            binary_warped = cv2.bitwise_or(sx_binary, white_binary)                        
 
 #%% Mask
         mask = np.zeros_like(binary_warped)   
-        vertices = np.array(
-                    [[0, 540],  # Bottom left
-                    [430, 330],  # Top left
-                    [530, 330],  # Top right
-                    [960, 540]]) # Bottom right
 
         if len(binary_warped.shape) > 2:
             channel_count = binary_warped.shape[2]
@@ -104,12 +162,6 @@ for idx in range(frame_count):
         masked_image = cv2.bitwise_and(binary_warped, mask)
 
 #%% Line
-        rho = 1
-        theta = np.pi/180
-        threshold = 1
-        min_line_len = 10
-        max_line_gap = 1
-
         lines = cv2.HoughLinesP(masked_image, rho, theta, threshold, np.array([]), minLineLength=min_line_len, maxLineGap=max_line_gap)
         line_img = np.zeros((masked_image.shape[0], masked_image.shape[1], 3), dtype=np.uint8)
         lines_new = _line(lines, vertices)
