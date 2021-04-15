@@ -82,9 +82,10 @@ def _line(lines, vertices, lines_new, res=2500):
     lines_out = np.zeros((res*2, 1, 4))
     Lx1, Ly1, Rx1, Ry1 = lr_lines(x1, y1)
     Lx2, Ly2, Rx2, Ry2 = lr_lines(x2, y2)
+    # find the minimum number in lane line pixels
     min_Lpt = np.min([Lx1.size, Ly1.size, Lx2.size, Ly2.size])
     min_Rpt = np.min([Rx1.size, Ry1.size, Rx2.size, Ry2.size])
-
+    # if its amount was equal to zero, uses fitting lines of previous frame
     if min_Lpt==0 or min_Rpt==0:
         lines_out = lines_new
     
