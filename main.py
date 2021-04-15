@@ -75,7 +75,7 @@ def linear_reg(x, y, res, Llimt, Rlimt):
     yfit = model.predict(xfit)
     return xfit, yfit
 
-def _line(lines, vertices, lines_new, res=10000):
+def _line(lines, vertices, lines_new, res=2500):
     x1 = lines[:, :, 0]
     y1 = lines[:, :, 1]
     x2 = lines[:, :, 2]
