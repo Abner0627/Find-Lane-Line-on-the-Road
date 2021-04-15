@@ -198,9 +198,9 @@ for idx in range(frame_count):
         # set the size of output video
         size = (width, height)
         video.append(result)
-vc.release()
 
 #%% Save video
+vc.release()
 out = cv2.VideoWriter(os.path.join(sP, sV), cv2.VideoWriter_fourcc(*'DIVX'), fps, size)
 for i in range(len(video)):
     out.write(video[i])
