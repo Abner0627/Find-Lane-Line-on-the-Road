@@ -16,10 +16,13 @@ parser.add_argument('-V','--video',
 args = parser.parse_args()
 
 #%% Load video
+# data path
 P = './data'
 V = args.video + '.mp4'
+# save path
 sP = './output'
 sV = 'Lane_' + V
+# capture video and calculate its fps
 vc = cv2.VideoCapture(os.path.join(P, V))
 fps = vc.get(cv2.CAP_PROP_FPS)
 frame_count = int(vc.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -72,8 +75,6 @@ def linear_reg(x, y, res, Llimt, Rlimt):
     return xfit, yfit
 
 def _line(lines, vertices, lines_new, res=2500):
-    color = [255, 0, 0]
-    thickness = 5
     x1 = lines[:, :, 0]
     y1 = lines[:, :, 1]
     x2 = lines[:, :, 2]
@@ -119,7 +120,9 @@ for idx in range(frame_count):
         img = frame
         
 #%% Edge
+        # transform into gray scale img
         gray_img =cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        # sobel filter
         sobelx = cv2.Sobel(gray_img, cv2.CV_64F, 1, 0)
         abs_sobelx = np.absolute(sobelx)
         scaled_sobel = np.uint8(255*abs_sobelx/np.max(abs_sobelx))
@@ -153,36 +156,45 @@ for idx in range(frame_count):
             binary_warped = cv2.bitwise_or(sx_binary, white_binary)
 
         else:
+            # set binary threshold of sobel
             sx_binary = np.zeros_like(scaled_sobel)
             sx_binary[(scaled_sobel >= 25) & (scaled_sobel <= 255)] = 1
+            # set binary threshold of gray scale img
             white_binary = np.zeros_like(gray_img)
             white_binary[(gray_img > 150) & (gray_img <= 255)] = 1
+            # combine them with 'OR'
             binary_warped = cv2.bitwise_or(sx_binary, white_binary)                        
 
 #%% Mask
+        # initailize mask
         mask = np.zeros_like(binary_warped)   
-
         if len(binary_warped.shape) > 2:
             channel_count = binary_warped.shape[2]
             ignore_mask_color = (255,) * channel_count
         else:
             ignore_mask_color = 255
-         
+        # fill mask region
         cv2.fillPoly(mask, [vertices], ignore_mask_color)
         masked_image = cv2.bitwise_and(binary_warped, mask)
 
 #%% Line
-        lines = cv2.HoughLinesP(masked_image, rho, theta, threshold, np.array([]), minLineLength=min_line_len, maxLineGap=max_line_gap)
+        # use Hough transform to find the lane lines
+        lines = cv2.HoughLinesP(masked_image, rho, theta, threshold, np.array([]),
+                minLineLength=min_line_len, maxLineGap=max_line_gap)
         line_img = np.zeros((masked_image.shape[0], masked_image.shape[1], 3), dtype=np.uint8)
+        # divide the left part or right part of lane line, 
+        # then use linear regression to find their fitting lines
         lines_new = _line(lines, vertices, lines_new)
-
+        # draw the fiiting lines
         draw_lines(line_img, lines_new)
 
 
 #%% Output
         line_img = line_img[:,:,[2,1,0]]
+        # map overlay
         result = cv2.addWeighted(img, 1, line_img, 1, 0)      
         height, width, layers = result.shape
+        # set the size of output video
         size = (width, height)
         video.append(result)
 vc.release()
